@@ -72,6 +72,32 @@ export default new Router({
 
 export const asyncRouterMap = [
   {
+    path: '/proxy',
+    component: Layout,
+    redirect: '/proxy/index',
+    alwaysShow: true, // will always show the root menu
+    meta: {
+      title: '代理',
+      icon: 'hacker'
+    },
+    children: [{
+      path: 'table',
+      component: () => import('@/views/proxy/proxyTable'),
+      name: 'table',
+      meta: {
+        title: '查看'
+      }
+    }, {
+      path: 'detail',
+      component: () => import('@/views/proxy/proxyTable'),
+      name: 'detail',
+      meta: {
+        title: '详情'
+      }
+    }]
+  },
+
+  {
     path: '/permission',
     component: Layout,
     redirect: '/permission/index',

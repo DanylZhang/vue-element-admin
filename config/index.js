@@ -10,7 +10,16 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
+    proxyTable: {
+      '/api': {
+        target: 'http://localhost:33333',
+        logLevel: 'debug', // or 'info'
+        changeOrigin: true,
+        pathRewrite: {
+          // '^/api': '/' // 此时不需要开启，否则会重写成 '/api/proxy/table' -> '//proxy/table'
+        }
+      }
+    },
 
     // Various Dev Server settings
 
@@ -66,7 +75,7 @@ module.exports = {
      * then assetsPublicPath should be set to "/bar/".
      * In most cases please use '/' !!!
      */
-    assetsPublicPath: '/vue-element-admin/', // If you are deployed on the root path, please use '/'
+    assetsPublicPath: '/', // If you are deployed on the root path, please use '/'
 
     /**
      * Source Maps
