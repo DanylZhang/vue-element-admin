@@ -1,38 +1,38 @@
 <template>
   <div class="app-container">
-    <div class="filter-container">
-      <!--搜索条件: target url-->
-      <el-input @keyup.enter.native="handleFilter" style="width: 350px;" class="filter-item"
-                placeholder="http://目标网址" v-model="listQuery.url">
-      </el-input>
-      <!--搜索条件: target regex-->
-      <el-input style="width: 140px;" class="filter-item"
-                placeholder="校验正则" v-model="listQuery.regex">
-      </el-input>
-      <!--搜索条件：timeout-->
-      <el-tooltip class="item" effect="dark" content="校验代理超时时间" :open-delay=800 placement="top">
-        <el-input-number style="width: 100px;" class="filter-item" controls-position="right"
-                         :min="1" :max="60" v-model="listQuery.timeout">
-        </el-input-number>
-      </el-tooltip>
-      <!--搜索条件: proxy type-->
-      <el-select clearable style="width: 100px" class="filter-item" v-model="listQuery.where"
-                 placeholder="TYPE">
-        <el-option v-for="(value,key) in typeOptions" :key="key" :label="key" :value="value">
-        </el-option>
-      </el-select>
-      <el-button class="filter-item" type="primary" v-waves icon="el-icon-search" @click="handleFilter">
-        {{$t('table.search')}}
-      </el-button>
-      <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary"
-                 icon="el-icon-edit">{{$t('table.add')}}
-      </el-button>
-      <el-button class="filter-item" type="primary" :loading="downloadLoading" v-waves icon="el-icon-download"
-                 @click="handleDownload">{{$t('table.export')}}
-      </el-button>
-    </div>
+    <expand-block tip="过滤条件编辑器">
+      <div class="filter-container">
+        <!--搜索条件: target url-->
+        <el-input @keyup.enter.native="handleFilter" style="width: 350px;" class="filter-item"
+                  placeholder="http://目标网址" v-model="listQuery.url">
+        </el-input>
+        <!--搜索条件: target regex-->
+        <el-input style="width: 140px;" class="filter-item"
+                  placeholder="校验正则" v-model="listQuery.regex">
+        </el-input>
+        <!--搜索条件：timeout-->
+        <el-tooltip class="item" effect="dark" content="校验代理超时时间" :open-delay=800 placement="top">
+          <el-input-number style="width: 100px;" class="filter-item" controls-position="right"
+                           :min="1" :max="60" v-model="listQuery.timeout">
+          </el-input-number>
+        </el-tooltip>
 
-    <sql-editor></sql-editor>
+        <el-button class="filter-item" type="primary" :loading="searchLoading" v-waves icon="el-icon-search"
+                   @click="handleFilter">
+          {{$t('table.search')}}
+        </el-button>
+        <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary"
+                   icon="el-icon-edit">{{$t('table.add')}}
+        </el-button>
+        <el-button class="filter-item" type="primary" :loading="downloadLoading" v-waves icon="el-icon-download"
+                   @click="handleDownload">{{$t('table.export')}}
+        </el-button>
+      </div>
+
+      <div class="editor-container" slot="expand">
+        <codemirror v-model="listQuery.where" :options="cmOption"></codemirror>
+      </div>
+    </expand-block>
 
     <!--分页-->
     <div class="top-pagination-container">
@@ -48,7 +48,6 @@
               @header-click="handleHeaderClick"
               v-loading="listLoading"
               :element-loading-text="listLoadingText"
-              element-loading-background="rgba(48, 65, 86, 0.9)"
               style="width: 100%;min-height:1000px;">
       <!--多选-->
       <el-table-column
@@ -124,11 +123,6 @@
       <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px"
                style='width: 400px; margin-left:50px;'>
         <el-form-item :label="$t('table.type')" prop="type">
-          <el-select class="filter-item" v-model="temp.type" placeholder="Please select">
-            <el-option v-for="item in  calendarTypeOptions" :key="item.key" :label="item.display_name"
-                       :value="item.key">
-            </el-option>
-          </el-select>
         </el-form-item>
         <el-form-item :label="$t('table.date')" prop="timestamp">
           <el-date-picker v-model="temp.timestamp" type="datetime" placeholder="Please pick a date">
@@ -176,25 +170,15 @@
   import { createArticle, fetchPv, updateArticle } from '@/api/article'
   import waves from '@/directive/waves' // 水波纹指令
   import { parseTime } from '@/utils'
-  import SqlEditor from '@/components/SqlEditor'
   import axios from 'axios'
-
-  const calendarTypeOptions = [
-    { key: 'CN', display_name: 'China' },
-    { key: 'US', display_name: 'USA' },
-    { key: 'JP', display_name: 'Japan' },
-    { key: 'EU', display_name: 'Eurozone' }
-  ]
-
-  // arr to obj ,such as { CN : "China", US : "USA" }
-  const calendarTypeKeyValue = calendarTypeOptions.reduce((acc, cur) => {
-    acc[cur.key] = cur.display_name
-    return acc
-  }, {})
+  import { codemirror } from 'vue-codemirror'
+  // 需要额外引入指定的codemirror mode、hint、theme等文件,全都放到sqlEditor中去引入
+  import SqlEditor from '../../components/SqlEditor/index'
+  import ExpandBlock from '../../components/ExpandBlock/index'
 
   export default {
     name: 'complexTable',
-    components: { SqlEditor },
+    components: { SqlEditor, ExpandBlock, codemirror },
     directives: {
       waves
     },
@@ -203,6 +187,7 @@
         tableKey: 0,
         list: null,
         total: null,
+        searchLoading: false,
         listLoading: true,
         listLoadingText: '拼命加载中',
         listQuery: {
@@ -216,9 +201,21 @@
             { speed: 'ascending' }
           ]
         },
-        typeOptions: { 'http': " type='http' ", 'https': " type='https' ", 'socks': " type='socks' " },
-        calendarTypeOptions,
-        sortOptions: [{ label: 'Speed Ascending', key: 'ascending' }, { label: 'Speed Descending', key: 'descending' }],
+        cmOption: {
+          tabSize: 4,
+          styleActiveLine: true,
+          lineNumbers: true,
+          line: true,
+          mode: 'text/x-mysql',
+          scrollbarStyle: 'simple',
+          smartIndent: true,
+          gutters: ['CodeMirror-lint-markers'],
+          extraKeys: {
+            'Ctrl': 'autocomplete'
+          },
+          theme: 'rubyblue',
+          lint: true
+        },
         statusOptions: ['published', 'draft', 'deleted'],
         showReviewer: false,
         temp: {
@@ -254,9 +251,6 @@
           socks: 'danger'
         }
         return typeMap[type]
-      },
-      validFilter(type) {
-        return calendarTypeKeyValue[type]
       }
     },
     created() {
@@ -274,6 +268,7 @@
 
         // 打开loading
         this.listLoading = true
+        this.searchLoading = true
 
         console.log(JSON.stringify(this.listQuery))
         axios.post('/api/proxy/table', this.listQuery)
@@ -293,6 +288,7 @@
             }
           }).finally(() => {
             this.listLoading = false
+            this.searchLoading = false
             clearInterval(interval)
           })
       },

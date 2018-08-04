@@ -69,6 +69,10 @@ export default {
     screenfull: '全屏',
     theme: '换肤'
   },
+  expandBlock: {
+    expand: '点击展开',
+    collapse: '点击折叠'
+  },
   login: {
     title: '系统登录',
     logIn: '登录',

@@ -1,5 +1,5 @@
 <template>
-  <div class="json-editor">
+  <div class="sql-editor">
     <textarea ref="textarea"></textarea>
   </div>
 </template>
@@ -7,15 +7,21 @@
 <script>
   import _ from 'lodash'
   import CodeMirror from 'codemirror'
+  // codemirror addon lint
   import 'codemirror/addon/lint/lint.css'
-  import 'codemirror/lib/codemirror.css'
-  import 'codemirror/theme/rubyblue.css'
-  import 'codemirror/addon/hint/show-hint.css'
   import 'codemirror/addon/lint/lint'
-  import 'codemirror/mode/sql/sql'
+  // codemirror addon hint
+  import 'codemirror/addon/hint/show-hint.css'
   import 'codemirror/addon/hint/show-hint'
   import 'codemirror/addon/hint/sql-hint'
   import 'codemirror/addon/hint/anyword-hint'
+  // codemirror addon scroll
+  import 'codemirror/addon/scroll/simplescrollbars.css'
+  import 'codemirror/addon/scroll/simplescrollbars'
+
+  import 'codemirror/mode/sql/sql'
+  import 'codemirror/lib/codemirror.css'
+  import 'codemirror/theme/rubyblue.css'
 
   export default {
     name: 'sqlEditor',
@@ -26,16 +32,18 @@
     },
     props: ['value'],
     watch: {
-      value(value) {
+      value(newValue, oldValue) {
         const editor_value = this.sqlEditor.getValue()
-        if (value !== editor_value) {
-          this.sqlEditor.setValue(JSON.stringify(this.value, null, 2))
+        if (newValue !== editor_value) {
+          this.sqlEditor.setValue(this.value)
         }
       }
     },
     mounted() {
       this.sqlEditor = CodeMirror.fromTextArea(this.$refs.textarea, {
         lineNumbers: true,
+        scrollbarStyle: 'simple',
+        smartIndent: true,
         mode: 'text/x-mysql',
         gutters: ['CodeMirror-lint-markers'],
         extraKeys: {
@@ -45,16 +53,16 @@
         lint: true
       })
 
-      this.sqlEditor.setValue(JSON.stringify(this.value, null, 2))
-      this.sqlEditor.on('change', cm => {
-        this.$emit('changed', cm.getValue())
-        this.$emit('input', cm.getValue())
-      })
-
+      if (this.value) {
+        this.sqlEditor.setValue(this.value)
+      }
       this.sqlEditor.on('change', (editor, change) => { // 任意键触发autocomplete
+        // 向父组件发射编辑器内容发生变化的事件
+        this.$emit('changed', editor.getValue())
+        this.$emit('input', editor.getValue())
+        // 如果是增量输入则激活自动完成
         if (change.origin === '+input') {
           const text = change.text
-          console.log(text)
           if (_.indexOf([' ', '-', '*', '  '], text[0]) === -1) {
             setTimeout(() => {
               editor.execCommand('autocomplete')
@@ -72,21 +80,21 @@
 </script>
 
 <style scoped>
-  .json-editor {
+  .sql-editor {
     height: 100%;
     position: relative;
   }
 
-  .json-editor >>> .CodeMirror {
+  .sql-editor >>> .CodeMirror {
     height: auto;
     min-height: 300px;
   }
 
-  .json-editor >>> .CodeMirror-scroll {
+  .sql-editor >>> .CodeMirror-scroll {
     min-height: 300px;
   }
 
-  .json-editor >>> .cm-s-rubyblue span.cm-string {
+  .sql-editor >>> .cm-s-rubyblue span.cm-string {
     color: #F08047;
   }
 </style>

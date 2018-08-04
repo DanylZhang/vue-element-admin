@@ -69,6 +69,10 @@ export default {
     screenfull: 'screenfull',
     theme: 'theme'
   },
+  expandBlock: {
+    expand: 'click to expand',
+    collapse: 'click to collapse'
+  },
   login: {
     title: 'Login Form',
     logIn: 'Log in',
