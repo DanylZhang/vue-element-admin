@@ -30,7 +30,7 @@
       </div>
 
       <div class="editor-container" slot="expand">
-        <codemirror v-model="listQuery.where" :options="cmOption"></codemirror>
+        <sql-editor v-model="listQuery.where" ref="editor"></sql-editor>
       </div>
     </expand-block>
 
@@ -171,14 +171,12 @@
   import waves from '@/directive/waves' // 水波纹指令
   import { parseTime } from '@/utils'
   import axios from 'axios'
-  import { codemirror } from 'vue-codemirror'
-  // 需要额外引入指定的codemirror mode、hint、theme等文件,全都放到sqlEditor中去引入
   import SqlEditor from '../../components/SqlEditor/index'
   import ExpandBlock from '../../components/ExpandBlock/index'
 
   export default {
     name: 'complexTable',
-    components: { SqlEditor, ExpandBlock, codemirror },
+    components: { SqlEditor, ExpandBlock },
     directives: {
       waves
     },
@@ -200,21 +198,6 @@
           orderBy: [
             { speed: 'ascending' }
           ]
-        },
-        cmOption: {
-          tabSize: 4,
-          styleActiveLine: true,
-          lineNumbers: true,
-          line: true,
-          mode: 'text/x-mysql',
-          scrollbarStyle: 'simple',
-          smartIndent: true,
-          gutters: ['CodeMirror-lint-markers'],
-          extraKeys: {
-            'Ctrl': 'autocomplete'
-          },
-          theme: 'rubyblue',
-          lint: true
         },
         statusOptions: ['published', 'draft', 'deleted'],
         showReviewer: false,
@@ -254,6 +237,7 @@
       }
     },
     created() {
+      this.getSqlHint()
       this.getList()
     },
     methods: {
@@ -290,6 +274,15 @@
             this.listLoading = false
             this.searchLoading = false
             clearInterval(interval)
+          })
+      },
+      getSqlHint() {
+        axios.get('/api/proxy/getSqlHint')
+          .then(response => {
+            response = response.data
+            if (response.code === 0) {
+              this.$refs.editor.setOption('hintOptions', response.data)
+            }
           })
       },
       handleFilter() {
