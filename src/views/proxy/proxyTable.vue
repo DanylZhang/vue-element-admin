@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <expand-block tip="过滤条件编辑器">
+    <expand-block tip="SQL编辑器">
       <div class="filter-container">
         <!--搜索条件: target url-->
         <el-input @keyup.enter.native="handleFilter" style="width: 350px;" class="filter-item"
@@ -43,8 +43,8 @@
     </div>
 
     <!--表格-->
-    <el-table :key='tableKey' :data="list" border fit highlight-current-row
-              :default-sort="{prop: 'speed', order: 'ascending'}"
+    <el-table :key='tableKey' :data="records" border fit highlight-current-row
+              :default-sort="{prop: 'SPEED', order: 'ascending'}"
               @header-click="handleHeaderClick"
               v-loading="listLoading"
               :element-loading-text="listLoadingText"
@@ -54,51 +54,19 @@
         type="selection"
         width="55">
       </el-table-column>
-      <!--proxy ip-->
-      <el-table-column prop="ip" sortable="custom" min-width="120px" align="center" :label="addSortSuffix('ip','ip')">
+
+      <el-table-column v-for="(item,index) in fields" :key="item.name"
+                       :prop="item.name" sortable="custom" show-overflow-tooltip
+                       min-width="120px"
+                       align="center"
+                       :label="addSortSuffix(item.name,item.name)">
         <template slot-scope="scope">
-          <span>{{scope.row.ip}}</span>
-        </template>
-      </el-table-column>
-      <!--proxy port-->
-      <el-table-column prop="port" sortable="custom" width="120px" align="center" :label="addSortSuffix('port','port')">
-        <template slot-scope="scope">
-          <span>{{scope.row.port}}</span>
-        </template>
-      </el-table-column>
-      <!--proxy speed-->
-      <el-table-column prop="speed" sortable="custom" width="120px" align="center"
-                       :label="addSortSuffix('speed','speed')">
-        <template slot-scope="scope">
-          <span>{{scope.row.speed}}</span>
-        </template>
-      </el-table-column>
-      <!--proxy type-->
-      <el-table-column prop="type" sortable="custom" width="120px" align="center" :label="addSortSuffix('type','type')">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.type | typeFilter">{{scope.row.type}}</el-tag>
-        </template>
-      </el-table-column>
-      <!--proxy is_valid-->
-      <el-table-column prop="is_valid" sortable="custom" width="120px" align="center"
-                       :label="addSortSuffix('is_valid','is_valid')">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.isValid | typeFilter">{{scope.row.isValid}}</el-tag>
-        </template>
-      </el-table-column>
-      <!--proxy comment-->
-      <el-table-column prop="comment" sortable="custom" min-width="150px" align="center"
-                       :label="addSortSuffix('comment','comment')"
-                       show-overflow-tooltip>
-        <template slot-scope="scope">
-          <span>{{scope.row.comment}}</span>
-        </template>
-      </el-table-column>
-      <!--proxy create_time-->
-      <el-table-column prop="create_time" sortable="custom" min-width="150px" align="center"
-                       :label="addSortSuffix('create_time','create_time')">
-        <template slot-scope="scope">
-          <span>{{scope.row.createTime}}</span>
+          <el-tag v-if="item.name === 'TYPE' || item.name ==='IS_VALID'" :type="scope.row[index] | typeFilter">
+            {{scope.row[index]}}
+          </el-tag>
+          <span v-else>
+            {{scope.row[index]}}
+          </span>
         </template>
       </el-table-column>
 
@@ -108,9 +76,6 @@
           <el-button type="primary" size="mini" @click="handleUpdate(scope.row)">{{$t('table.edit')}}</el-button>
           <el-button v-if="scope.row.status!='published'" size="mini" type="success"
                      @click="handleModifyStatus(scope.row,'published')">{{$t('table.publish')}}
-          </el-button>
-          <el-button v-if="scope.row.status!='draft'" size="mini" @click="handleModifyStatus(scope.row,'draft')">
-            {{$t('table.draft')}}
           </el-button>
           <el-button v-if="scope.row.status!='deleted'" size="mini" type="danger"
                      @click="handleModifyStatus(scope.row,'deleted')">{{$t('table.delete')}}
@@ -183,7 +148,8 @@
     data() {
       return {
         tableKey: 0,
-        list: null,
+        fields: null,
+        records: null,
         total: null,
         searchLoading: false,
         listLoading: true,
@@ -196,7 +162,7 @@
           timeout: 30,
           where: undefined,
           orderBy: [
-            { speed: 'ascending' }
+            { SPEED: 'ascending' }
           ]
         },
         statusOptions: ['published', 'draft', 'deleted'],
@@ -260,7 +226,8 @@
             response = response.data
             console.log(response)
             if (response.code === 0) {
-              this.list = response.data.proxies
+              this.fields = response.data.fields
+              this.records = response.data.records
               this.total = response.data.total
             } else {
               this.$message({
