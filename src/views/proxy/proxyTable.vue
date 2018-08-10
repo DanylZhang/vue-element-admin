@@ -268,7 +268,7 @@
         this.getList()
       },
       handleHeaderClick(column, event) {
-        if (column.type === 'selection') {
+        if (column.type === 'selection' || column.label === this.$t('table.actions')) {
           return
         }
         const currentField = column.property
