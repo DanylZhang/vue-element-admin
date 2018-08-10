@@ -30,7 +30,7 @@
       </div>
 
       <div class="editor-container" slot="expand">
-        <sql-editor v-model="listQuery.where" ref="editor"></sql-editor>
+        <sql-editor v-model="listQuery.where" ref="editor" @changed="handleWhereChange"></sql-editor>
       </div>
     </expand-block>
 
@@ -234,6 +234,7 @@
                 showClose: true,
                 message: response.msg,
                 type: 'warning',
+                duration: 3000,
                 center: true
               })
             }
@@ -255,7 +256,7 @@
       handleFilter() {
         this.listQuery.page = 1
         if (this.listQuery.url) {
-          this.listQuery.orderBy.splice(0, this.listQuery.orderBy.length, { speed: 'ascending' })
+          this.listQuery.orderBy.splice(0, this.listQuery.orderBy.length, { SPEED: 'ascending' })
         }
         this.getList()
       },
@@ -266,6 +267,11 @@
       handleCurrentChange(val) {
         this.listQuery.page = val
         this.getList()
+      },
+      handleWhereChange() {
+        // 当sqlEditor中的Sql改变时，清除排序和Url
+        this.listQuery.orderBy.splice(0)
+        this.listQuery.url = undefined
       },
       handleHeaderClick(column, event) {
         if (column.type === 'selection' || column.label === this.$t('table.actions')) {

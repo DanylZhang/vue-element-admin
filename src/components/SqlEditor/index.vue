@@ -5,7 +5,6 @@
 </template>
 
 <script>
-  import _ from 'lodash'
   import CodeMirror from 'codemirror'
   import 'codemirror/lib/codemirror.css'
   import 'codemirror/theme/rubyblue.css'
@@ -79,15 +78,17 @@
         // 向父组件发射编辑器内容发生变化的事件
         this.$emit('changed', editor.getValue())
         this.$emit('input', editor.getValue())
+
+        // 自动提示逻辑未完善，暂不启用
         // 如果是增量输入则激活自动完成
-        if (change.origin === '+input') {
-          const text = change.text
-          if (_.indexOf([' ', '-', '*', '%', '\'', '"', '  '], text[0]) === -1) {
-            setTimeout(() => {
-              editor.execCommand('autocomplete')
-            }, 20)
-          }
-        }
+        // if (change.origin === '+input') {
+        //   const text = change.text
+        //   if (_.indexOf([' ', '-', '*', '%', '\'', '"', '  '], text[0]) === -1) {
+        //     setTimeout(() => {
+        //       editor.execCommand('autocomplete')
+        //     }, 20)
+        //   }
+        // }
       })
     },
     methods: {
