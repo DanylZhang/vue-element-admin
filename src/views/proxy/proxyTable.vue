@@ -55,7 +55,7 @@
         width="55">
       </el-table-column>
 
-      <el-table-column v-for="(item,index) in fields" :key="item.name"
+      <el-table-column v-for="(item,index) in fields" :key="index"
                        :prop="item.name" sortable="custom" show-overflow-tooltip
                        min-width="120px"
                        align="center"
