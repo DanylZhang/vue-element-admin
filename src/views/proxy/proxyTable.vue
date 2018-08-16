@@ -253,6 +253,18 @@
             }
           })
       },
+      deleteProxy(row) {
+        const deletePayload = {}
+        for (let i = 0; i < this.fields.length; i++) {
+          const fieldName = this.fields[i].name
+          deletePayload[fieldName] = row[i]
+        }
+        axios.post('/api/proxy/delete', deletePayload)
+          .then(response => {
+            response = response.data
+            console.log(response)
+          })
+      },
       handleFilter() {
         this.listQuery.page = 1
         if (this.listQuery.url) {
@@ -317,10 +329,14 @@
         return result
       },
       handleModifyStatus(row, status) {
+        if (status === 'deleted') {
+          this.deleteProxy(row)
+        }
         this.$message({
           message: '操作成功',
           type: 'success'
         })
+        this.getList()
         row.status = status
       },
       resetTemp() {
